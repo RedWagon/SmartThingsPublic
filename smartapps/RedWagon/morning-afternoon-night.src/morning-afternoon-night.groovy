@@ -32,6 +32,12 @@ def configurations() {
 			input "days", "enum", title: "Only on certain days of the week:", multiple: true, required: false, options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 			input "modes", "mode", title: "Only when mode is:", multiple: true, required: false 
         }
+        section("Turning ON when there's movement...") {
+            input "motionSensor", "capability.motionSensor", title: "Where?", multiple: true, required: true
+        } 
+        section("And then OFF when there's been no movement for...") {
+            input "delayMinutes", "number", title: "Minutes?", required: false
+        }
         section("Control these light(s)...") {
             input "light_lights", "capability.switch", title: "Light(s) when light?", multiple: true, required: false
             input "dark_lights", "capability.switch", title: "Light(s) when dark?", multiple: true, required: false
@@ -43,19 +49,33 @@ def configurations() {
         }
         section("Control these hue bulbs...") {
             input "hues", "capability.colorControl", title: "Which Hue Bulbs?", required: false, multiple: true
-            input "light_color", "enum", title: "Hue Color?", required: false, multiple:false, options: [
+            input "light_color", "enum", title: "Light Color?", required: false, multiple:false, options: [
                 ["Soft White":"Soft White - Default"],
                 ["White":"White - Concentrate"],
                 ["Daylight":"Daylight - Energize"],
                 ["Warm White":"Warm White - Relax"],
-                "Red","Green","Blue","Yellow","Orange","Purple","Pink"]
+                ["Red": "Red"],
+                ["Green": "Green"],
+                ["Blue": "Blue"],
+                ["Yellow": "Yellow"],
+                ["Orange": "Orange"],
+                ["Purple": "Purple"],
+                ["Pink": "Pink"]
+            ]
             input "light_colorLevel", "enum", title: "Light Level?", required: false, options: [[10:"10%"],[20:"20%"],[30:"30%"],[40:"40%"],[50:"50%"],[60:"60%"],[70:"70%"],[80:"80%"],[90:"90%"],[100:"100%"]]
-            input "dark_color", "enum", title: "Hue Color?", required: false, multiple:false, options: [
+            input "dark_color", "enum", title: "Dark Color?", required: false, multiple:false, options: [
                 ["Soft White":"Soft White - Default"],
                 ["White":"White - Concentrate"],
                 ["Daylight":"Daylight - Energize"],
                 ["Warm White":"Warm White - Relax"],
-                "Red","Green","Blue","Yellow","Orange","Purple","Pink"]
+                ["Red": "Red"],
+                ["Green": "Green"],
+                ["Blue": "Blue"],
+                ["Yellow": "Yellow"],
+                ["Orange": "Orange"],
+                ["Purple": "Purple"],
+                ["Pink": "Pink"]
+            ]
             input "dark_colorLevel", "enum", title: "Light Level?", required: false, options: [[10:"10%"],[20:"20%"],[30:"30%"],[40:"40%"],[50:"50%"],[60:"60%"],[70:"70%"],[80:"80%"],[90:"90%"],[100:"100%"]]
         }
 		section ("Assign a name") {
@@ -71,35 +91,24 @@ Map getHueColors() {
 
 def options() {
     dynamicPage(name: "options", title: "Lights will turn ON on movement...", install: true, uninstall: true) {
-        section("Turning ON when there's movement...") {
-            input "motionSensor", "capability.motionSensor", title: "Where?", multiple: true, required: true
-        } 
-        section("And then OFF when there's been no movement for...") {
-            input "delayMinutes", "number", title: "Minutes?", required: false
+        if (dark == true) {
+            section("Using this light sensor...") {
+                input "lightSensor", "capability.illuminanceMeasurement",title: "Light Sensor?", multiple: false, required: true
+                input "luxLevel", "number", title: "Illuminance threshold? (default 50 lux)",defaultValue: "50", required: false
+            }
         }
-    }
-    if (dark == true) {
-    	dynamicPage(name: "options", title: "Lights will turn ON on movement when it is dark...", install: true, uninstall: true) {
-			section("Using this light sensor...") {
-				input "lightSensor", "capability.illuminanceMeasurement",title: "Light Sensor?", multiple: false, required: true
-        		input "luxLevel", "number", title: "Illuminance threshold? (default 50 lux)",defaultValue: "50", required: false
+        if (sun == true) {
+            section ("Between sunset and sunrise...") {
+                input "sunriseOffsetValue", "text", title: "Sunrise offset", required: false, description: "00:00"
+                input "sunriseOffsetDir", "enum", title: "Before or After", required: false, metadata: [values: ["Before","After"]]
+                input "sunsetOffsetValue", "text", title: "Sunset offset", required: false, description: "00:00"
+                input "sunsetOffsetDir", "enum", title: "Before or After", required: false, metadata: [values: ["Before","After"]]
+            }
+            section ("Zip code (optional, defaults to location coordinates when location services are enabled)...") {
+                input "zipCode", "text", title: "Zip Code?", required: false, description: "Local Zip Code"
             }
         }
     }
-    if (sun == true) {
-    	dynamicPage(name: "options", title: "Lights will turn ON on movement between sunset and sunrise...", install: true, uninstall: true) {
-			section ("Between sunset and sunrise...") {
-				input "sunriseOffsetValue", "text", title: "Sunrise offset", required: false, description: "00:00"
-				input "sunriseOffsetDir", "enum", title: "Before or After", required: false, metadata: [values: ["Before","After"]]
-        		input "sunsetOffsetValue", "text", title: "Sunset offset", required: false, description: "00:00"
-				input "sunsetOffsetDir", "enum", title: "Before or After", required: false, metadata: [values: ["Before","After"]]
-            }
-			section ("Zip code (optional, defaults to location coordinates when location services are enabled)...") {
-				input "zipCode", "text", title: "Zip Code?", required: false, description: "Local Zip Code"
-            }
-        }
-    }
-
 }
 
 def installed() {
@@ -192,23 +201,33 @@ def motionHandler(evt) {
         unscheduleAll()
         if (dark == true) {
             if (darkOk == true) {
-                turnOn()
+                turnOnDark()
                 return
-            } 
+            } else {
+                turnOnLight()
+                return
+            }
         }
         if (sun == true) {
             if (sunOk == true) {
-                turnOn()
+                turnOnDark()
+                return
+            } else {
+                turnOnLight()
                 return
             }
         }
         if (dark != true && sun != true) {
             log.debug "Lights and dimmers will turn ON because $motionSensor detected motion..."
-            turnOn()
+            turnOnLight()
         }
     } 
     if (evt.value == "inactive") {
         unscheduleAll()
+        if (dark != true && sun != true) {
+            turnOnDark()
+            return
+        }
         if (delayMinutes) {
             def delay = delayMinutes * 60
             log.debug "Lights and dimmers will turn OFF in $delayMinutes minute(s)..."
@@ -358,10 +377,6 @@ def turnOnHues(color, colorLevel) {
         log.debug "Hues: none to turn on..."
         return
     }
-    if (state.huesState == "on") {
-        log.debug "Hues: $hues already ON."
-        return
-    }
     log.debug "Turning ON hues: $hues..."
     state.huesState = "on"
 
@@ -465,13 +480,8 @@ def turnOffHues() {
         log.debug "Hues: none to turn off..."
         return
     }
-    if (state.huesState == "off") {
-        log.debug "Hues: $hues already OFF."
-        return
-    }
     log.debug "Turning OFF hues: $hues..."
-    //dimmers?.off()
-    state.huesState = "off"
+    turnOnHues(0,0)
 }
 
 def astroCheck() {
