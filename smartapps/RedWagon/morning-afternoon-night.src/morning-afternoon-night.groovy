@@ -1,7 +1,7 @@
 definition(
-    name: "Bright When Dark And/Or Bright After Sunset",
-    namespace: "Arno",
-    author: "Arnaud",
+    name: "Fixed scenes on motion based on darkness or sun",
+    namespace: "RedWagon",
+    author: "RedWagon",
     description: "Turn ON light(s) and/or dimmer(s) when there's movement and the room is dark with illuminance threshold and/or between sunset and sunrise. Then turn OFF after X minute(s) when the brightness of the room is above the illuminance threshold or turn OFF after X minute(s) when there is no movement.",
     category: "Convenience",
     iconUrl: "http://neiloseman.com/wp-content/uploads/2013/08/stockvault-bulb128619.jpg",
