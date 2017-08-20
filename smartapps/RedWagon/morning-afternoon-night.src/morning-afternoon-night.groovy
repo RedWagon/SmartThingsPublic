@@ -228,11 +228,9 @@ def motionHandler(evt) {
             turnOnDark()
             return
         }
-        if (delayMinutes) {
-            def delay = delayMinutes * 60
-            log.debug "Lights and dimmers will turn OFF in $delayMinutes minute(s)..."
-            turnOff(delay)
-        }
+        def delay = delayMinutes * 60
+        log.debug "Lights and dimmers will turn OFF in $delayMinutes minute(s)..."
+        turnOff(delay)
     }
 }
 
@@ -481,7 +479,7 @@ def turnOffHues() {
         return
     }
     log.debug "Turning OFF hues: $hues..."
-    turnOnHues(0,0)
+    hues?.off()
 }
 
 def astroCheck() {
