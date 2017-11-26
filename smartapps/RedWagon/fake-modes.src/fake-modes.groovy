@@ -1,117 +1,56 @@
 definition(
-    name: "Fixed scenes on motion based on darkness or sun",
-    namespace: "RedWagon",
+    name: "Fake Modes Controller",
+    namespace: "fake-modes/parent",
     author: "RedWagon",
-    description: "Turn ON light(s) and/or dimmer(s) when there's movement and the room is dark with illuminance threshold and/or between sunset and sunrise. Then turn OFF after X minute(s) when the brightness of the room is above the illuminance threshold or turn OFF after X minute(s) when there is no movement.",
+    description: " ",
     category: "Convenience",
     iconUrl: "http://neiloseman.com/wp-content/uploads/2013/08/stockvault-bulb128619.jpg",
     iconX2Url: "http://neiloseman.com/wp-content/uploads/2013/08/stockvault-bulb128619.jpg"
 )
 
 preferences {
+    device_inputs()
+    sensor_inputs()
+    detail_inputs()
+    app(name: "fakeMode", appName: "Fake Mode", namespace: "fake-modes/child", title: "Create New Mode", multiple: true)
+}
+
+def detail_inputs() {
+    input "timeout", "number", title: "Normal timeout?", required: false
+    input "hard_timeout", "number", title: "Hard timeout?", required: false
+}
+
+def device_inputs() {
     section(title: "Devices") {
         input "temps", "capability.colorTemperature", title: "Hue bulbs (temp control)", required: false, multiple: true, hideWhenEmpty: true
         input "colors", "capability.colorControl", title: "Hue bulbs (color control)", required: false, multiple: true, hideWhenEmpty: true
         input "dimmers", "capability.switchLevel", title: "Dimmers", multiple: true, required:false, hideWhenEmpty: true
         input "switches", "capability.switch", title: "Switches", multiple: true, required: false, hideWhenEmpty: true
     }
-    section(title: "Sensors") {
-        input "sensors", "capability.motionSensor", title: "Motion Sensors", multiple: true, required: false, hideWhenEmpty: true
-        input "doors", "capability.contactSensor", title: "Door Sensors", multiple: true, required: false, hideWhenEmpty: true
-        input "buttons", "capability.buttons", title: "Buttons", multiple: true, required: false, hideWhenEmpty: true
+    section(title: "Optional Devices") {
+        input "optionals", "capability.switch", title: "Optional Devices", multiple: true, required: false, hideWhenEmpty: true
     }
-
 }
 
-
-def configurations() {
-	dynamicPage(name: "configurations", title: "Configurations...", uninstall: true, nextPage: "options") {
-		section(title: "Turn ON lights on movement when...") {
-			input "dark", "bool", title: "It is dark?", required: true
-            input "sun", "bool", title: "Between sunset and surise?", required: true
-        }
-		section(title: "More options...", hidden: hideOptionsSection(), hideable: true) {
-			def timeLabel = timeIntervalLabel()
-			href "timeIntervalInput", title: "Only during a certain time:", description: timeLabel ?: "Tap to set", state: timeLabel ? "complete" : null
-			input "days", "enum", title: "Only on certain days of the week:", multiple: true, required: false, options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-			input "modes", "mode", title: "Only when mode is:", multiple: true, required: false 
-        }
-        section("Turning ON when there's movement...") {
-        } 
-        section("And then OFF when there's been no movement for...") {
-            input "delayMinutes", "number", title: "Minutes?", required: false
-        }
-        section("Control these light(s)...") {
-            input "light_lights", "capability.switch", title: "Light(s) when light?", multiple: true, required: false
-            input "dark_lights", "capability.switch", title: "Light(s) when dark?", multiple: true, required: false
-        }    
-        section("Control these dimmer(s)...") { 
-            input "dimmers", "capability.switchLevel", title: "Dimmer(s)?", multiple: true, required:false
-            input "light_dimLevel", "number", title: "How bright when light?", required:false, description: "0% to 100%"
-            input "dark_dimLevel", "number", title: "How bright when dark?", required:false, description: "0% to 100%"
-        }
-        section("Control these hue bulbs...") {
-            input "hues", "capability.colorControl", title: "Which Hue Bulbs?", required: false, multiple: true
-            input "light_color", "enum", title: "Light Color?", required: false, multiple:false, options: [
-                ["Soft White":"Soft White - Default"],
-                ["White":"White - Concentrate"],
-                ["Daylight":"Daylight - Energize"],
-                ["Warm White":"Warm White - Relax"],
-                ["Red": "Red"],
-                ["Green": "Green"],
-                ["Blue": "Blue"],
-                ["Yellow": "Yellow"],
-                ["Orange": "Orange"],
-                ["Purple": "Purple"],
-                ["Pink": "Pink"]
-            ]
-            input "light_colorLevel", "enum", title: "Light Level?", required: false, options: [[10:"10%"],[20:"20%"],[30:"30%"],[40:"40%"],[50:"50%"],[60:"60%"],[70:"70%"],[80:"80%"],[90:"90%"],[100:"100%"]]
-            input "dark_color", "enum", title: "Dark Color?", required: false, multiple:false, options: [
-                ["Soft White":"Soft White - Default"],
-                ["White":"White - Concentrate"],
-                ["Daylight":"Daylight - Energize"],
-                ["Warm White":"Warm White - Relax"],
-                ["Red": "Red"],
-                ["Green": "Green"],
-                ["Blue": "Blue"],
-                ["Yellow": "Yellow"],
-                ["Orange": "Orange"],
-                ["Purple": "Purple"],
-                ["Pink": "Pink"]
-            ]
-            input "dark_colorLevel", "enum", title: "Light Level?", required: false, options: [[10:"10%"],[20:"20%"],[30:"30%"],[40:"40%"],[50:"50%"],[60:"60%"],[70:"70%"],[80:"80%"],[90:"90%"],[100:"100%"]]
-        }
-		section ("Assign a name") {
-			label title: "Assign a name", required: false
-        }
+def sensor_inputs() {
+    section(title: "Positive Events") {
+        input "sensors", "capability.motionSensor", title: "Motion Sensors", multiple: true, required: false, hideWhenEmpty: true
+        input "open_doors", "capability.contactSensor", title: "Open Doors", multiple: true, required: false, hideWhenEmpty: true
+        input "closed_doors", "capability.contactSensor", title: "Closed Doors", multiple: true, required: false, hideWhenEmpty: true
+        input "push_buttons", "capability.button", title: "Push Buttons", multiple: true, required: false, hideWhenEmpty: true
+        input "hold_buttons", "capability.button", title: "Hold Buttons", multiple: true, required: false, hideWhenEmpty: true
+    }
+    section(title: "Manual Off Events") {
+        input "open_doors_off", "capability.contactSensor", title: "Open Doors", multiple: true, required: false, hideWhenEmpty: true
+        input "closed_doors_off", "capability.contactSensor", title: "Closed Doors", multiple: true, required: false, hideWhenEmpty: true
+        input "push_buttons_off", "capability.button", title: "Push Buttons", multiple: true, required: false, hideWhenEmpty: true
+        input "hold_buttons_off", "capability.button", title: "Hold Buttons", multiple: true, required: false, hideWhenEmpty: true
     }
 }
 
 /** Constants for Hue Colors */
 Map getHueColors() {
     return [Red: 0, Green: 39, Blue: 70, Yellow: 25, Orange: 10, Purple: 75, Pink: 83]
-}
-
-def options() {
-    dynamicPage(name: "options", title: "Lights will turn ON on movement...", install: true, uninstall: true) {
-        if (dark == true) {
-            section("Using this light sensor...") {
-                input "lightSensor", "capability.illuminanceMeasurement",title: "Light Sensor?", multiple: false, required: true
-                input "luxLevel", "number", title: "Illuminance threshold? (default 50 lux)",defaultValue: "50", required: false
-            }
-        }
-        if (sun == true) {
-            section ("Between sunset and sunrise...") {
-                input "sunriseOffsetValue", "text", title: "Sunrise offset", required: false, description: "00:00"
-                input "sunriseOffsetDir", "enum", title: "Before or After", required: false, metadata: [values: ["Before","After"]]
-                input "sunsetOffsetValue", "text", title: "Sunset offset", required: false, description: "00:00"
-                input "sunsetOffsetDir", "enum", title: "Before or After", required: false, metadata: [values: ["Before","After"]]
-            }
-            section ("Zip code (optional, defaults to location coordinates when location services are enabled)...") {
-                input "zipCode", "text", title: "Zip Code?", required: false, description: "Local Zip Code"
-            }
-        }
-    }
 }
 
 def installed() {
@@ -127,76 +66,58 @@ def updated() {
 }
 
 def initialize() {
-	subscribe(motionSensor, "motion", motionHandler)
-    if (light_lights != null && light_lights != "") {
-        log.debug "$light_lights subscribing..."
-    	subscribe(light_lights, "switch", lightLightsHandler)
-    }
-    if (dark_lights != null && dark_lights != "") {
-        log.debug "$dark_lights subscribing..."
-    	subscribe(dark_lights, "switch", darkLightsHandler)
-    }
-    if (dimmers != null && dimmers != "") {
-        log.debug "$dimmers subscribing..."
-    	subscribe(dimmers, "switch", dimmersHandler)
-    }
-    if (hues != null && hues != "") {
-        log.debug "$hues subscribing..."
-    	subscribe(hues, "switch", huesHandler)
-    }
-    if (dark == true && lightSensor != null && lightSensor != "") {
-        log.debug "$light_lights and $dark_lights and $dimmers and $hues will turn ON when movement detected and when it is dark..."
-        subscribe(lightSensor, "illuminance", illuminanceHandler, [filterEvents: false])
-    }
-    if (sun == true) {
-        log.debug "$light_lights and $dark_lights and $dimmers and $hues will turn ON when movement detected between sunset and sunrise..."
-        astroCheck()
-        subscribe(location, "position", locationPositionChange)
-        subscribe(location, "sunriseTime", sunriseSunsetTimeHandler)
-        subscribe(location, "sunsetTime", sunriseSunsetTimeHandler)
-    }
+	subscribe(temps, "colorTemperature", rogueHandler)
+	subscribe(colors, "colorControl", rogueHandler)
 
-    log.debug "Determinating lights and dimmers current value..."
-    if (light_lights != null && light_lights != "") {
-        state.light_lightsState = "off"
-        if (light_lights.currentValue("switch").toString().contains("on")) {
-            state.light_lightsState = "on"
+	subscribe(temps, "switchLevel", rogueHandler)
+	subscribe(colors, "switchLevel", rogueHandler)
+	subscribe(dimmers, "switchLevel", rogueHandler)
+
+	subscribe(temps, "switch", rogueHandler)
+	subscribe(colors, "switch", rogueHandler)
+	subscribe(dimmers, "switch", rogueHandler)
+	subscribe(switches, "switch", rogueHandler)
+
+    subscribe(sensors, "motion.active", onHandler)
+    subscribe(open_doors, "contact.open", onHandler)
+    subscribe(closed_doors, "contact.closed", onHandler)
+    subscribe(push_buttons, "button.pushed", onHandler)
+    subscribe(held_buttons, "button.held", onHandler)
+
+    subscribe(sensors, "motion.inactive", timeoutHandler)
+
+    subscribe(open_doors_off, "contact.open", offHandler)
+    subscribe(closed_doors_off, "contact.closed", offHandler)
+    subscribe(push_buttons_off, "button.pushed", offHandler)
+    subscribe(held_buttons_off, "button.held", offHandler)
+}
+
+def rogueHandler(evt) {
+	log.debug "Rogue $evt.displayName $evt.name: $evt.value"
+}
+def onHandler(evt) {
+	log.debug "On $evt.displayName $evt.name: $evt.value"
+}
+def timeoutHandler(evt) {
+	log.debug "Timeout $evt.displayName $evt.name: $evt.value"
+}
+def offHandler(evt) {
+	log.debug "Off $evt.displayName $evt.name: $evt.value"
+}
+
+def writeMode(mode) {
+}
+
+def topMode() {
+    modes = getChildApps()
+    modes.each { mode ->
+        if (mode.active()) {
+            return mode
         }
-        log.debug "Lights $state.light_lightsState."
-    }
-    if (dark_lights != null && dark_lights != "") {
-        state.dark_lightsState = "off"
-        if (dark_lights.currentValue("switch").toString().contains("on")) {
-            state.dark_lightsState = "on"
-        }
-        log.debug "Lights $state.dark_lightsState."
-    }
-    if (dimmers != null && dimmers != "") {
-        state.dimmersState = "off"
-        if (dimmers.currentValue("switch").toString().contains("on")) {
-            state.dimmersState = "on"
-        } 
-        log.debug "Dimmers $state.dimmersState."
-    }
-    if (hues != null && hues != "") {
-        state.huesState = "off"
-        if (hues.currentValue("switch").toString().contains("on")) {
-            state.huesState = "on"
-        } 
-        log.debug "Hues $state.huesState."
     }
 }
             
-def locationPositionChange(evt) {
-	log.trace "locationChange()"
-	astroCheck()
-}
-
-def sunriseSunsetTimeHandler(evt) {
-	state.lastSunriseSunsetEvent = now()
-	log.debug "SmartNightlight.sunriseSunsetTimeHandler($app.id)"
-	astroCheck()
-}
+//old stuff
 
 def motionHandler(evt) {
 	log.debug "$evt.name: $evt.value"
