@@ -2,7 +2,7 @@ definition(
     name: "Fake Mode",
     namespace: "fake-modes/child",
     author: "RedWagon",
-    description: " ",
+    description: "Child app to be used with Fake Modes.  Define a set of color/states",
     category: "Convenience",
     iconUrl: "http://neiloseman.com/wp-content/uploads/2013/08/stockvault-bulb128619.jpg",
     iconX2Url: "http://neiloseman.com/wp-content/uploads/2013/08/stockvault-bulb128619.jpg"
@@ -10,7 +10,8 @@ definition(
 
 preferences {
     section(title: "Inputs") {
-        input "switches", "capability.switches", title: "Switches", multiple: true, required: false, hideWhenEmpty: true
+        input "switches", "capability.switch", title: "Switches", multiple: true, required: false, hideWhenEmpty: true
+        input "order", "enum", title: "Priority", required: false, options: [[1:"First"],[2:"2"],[3:"3"],[4:"4"],[5:"5"],[6:"6"],[7:"7"],[8:"8"],[9:"Last"]]
     }
     section(title: "Device States") {
         input "temp", "number", title: "White Temperature", required:false, description: "idk the range yet"
@@ -42,6 +43,11 @@ Map getHueColors() {
 */
 
 def active() {
+    if (!switches) {
+        log.debug "No active switches, defaulting to on"
+        return true
+    }
+    log.debug "Checking active state of switches"
     def currSwitches = switches.currentSwitch
 
     def onSwitches = currSwitches.findAll { switchVal ->
@@ -109,6 +115,7 @@ def getHueColor() {
             hueColor = 100
             break;
     }
+    def newValue = [hue: hueColor, saturation: saturation, level: color_level as Integer ?: 100]
     log.debug "new value = $newValue"
-    return newValue = [hue: hueColor, saturation: saturation, level: color_level as Integer ?: 100]
+    return newValue
 }

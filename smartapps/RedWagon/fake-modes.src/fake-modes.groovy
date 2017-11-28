@@ -2,7 +2,7 @@ definition(
     name: "Fake Modes Controller",
     namespace: "fake-modes/parent",
     author: "RedWagon",
-    description: " ",
+    description: "Parent script",
     category: "Convenience",
     iconUrl: "http://neiloseman.com/wp-content/uploads/2013/08/stockvault-bulb128619.jpg",
     iconX2Url: "http://neiloseman.com/wp-content/uploads/2013/08/stockvault-bulb128619.jpg"
@@ -12,12 +12,14 @@ preferences {
     device_inputs()
     sensor_inputs()
     detail_inputs()
-    app(name: "fakeMode", appName: "Fake Mode", namespace: "fake-modes/child", title: "Create New Mode", multiple: true)
 }
 
 def detail_inputs() {
-    input "timeout", "number", title: "Normal timeout?", required: false
-    input "hard_timeout", "number", title: "Hard timeout?", required: false
+    section(title: "Devices") {
+        input "timeout", "number", title: "Normal timeout?", required: false
+        input "hard_timeout", "number", title: "Hard timeout?", required: false
+        app(name: "fakeMode", appName: "Fake Mode", namespace: "fake-modes/child", title: "Create New Mode", multiple: true)
+    }
 }
 
 def device_inputs() {
@@ -112,10 +114,21 @@ def allOff() {
 }
 
 def writeMode(mode) {
-    temps?.setColorTemperature(modes.temp.toInteger())
-    colors?.setColor(mode.getHueColor())
-    dimmers?.setLevel(mode.dimmer_level.toInteger())
-    if (mode.switch_state) {
+    if (mode?.temp) {
+        log.debug("Setting temp")
+        temps?.setColorTemperature(mode.temp.toInteger())
+    }
+    if (mode?.color) {
+        def payload = mode.getHueColor()
+        log.debug("Setting color to $payload")
+        colors?.setColor(payload)
+    }
+    if (mode?.dimmer_level) {
+        log.debug("Setting dimmer")
+        dimmers?.setLevel(mode.dimmer_level.toInteger())
+    }
+    if (mode?.switch_state) {
+        log.debug("Setting switch")
         switches?.on()
     } else {
         switches?.off()
@@ -124,10 +137,24 @@ def writeMode(mode) {
 }
 
 def topMode() {
-    modes = getChildApps()
-    modes.each { mode ->
+    log.debug("Choosing top mode")
+    def modes = getChildApps()
+    //def top_mode = null
+    log.debug("I found $modes.size modes")
+    //return modes.find{ mode -> // mode.active() == true }
+    for (mode in modes.sort{ it.order }) {
+        log.debug("Testing mode $mode.label")
         if (mode.active()) {
+            log.debug("Mode is active $mode.label")
             return mode
         }
+        //if (!top_mode) {
+            //log.debug("Setting top mode $mode")
+            //top_mode = mode
+            //return mode
+        //}
     }
+    log.warn("topMode didn't return")
+    //log.debug("Returning top mode $top_mode")
+    //return top_mode
 }
