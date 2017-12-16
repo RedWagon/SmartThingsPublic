@@ -63,6 +63,9 @@ def updated() {
 }
 
 def initialize() {
+    state.bow_step = 1;
+    state.bow_delay = 30;
+    state.hue = 0;
 	subscribe(temps, "colorTemperature", rogueHandler)
 	subscribe(colors, "colorControl", rogueHandler)
 
@@ -119,6 +122,17 @@ def allOff() {
     switches?.off()
 }
 
+def rainbow() {
+    def new_hue = state.hue + state.hue_step
+    if (new_hue > 255) {
+        new_hue = 0
+    }
+    log.debug("Rainbow hue is $new_hue")
+    state.hue = new_hue
+    def payload = [hue: new_hue]
+    runIn(state.hue_delay, rainbow)
+}
+
 def writeMode(mode) {
     if (mode?.temp) {
         log.debug("Setting temp")
@@ -128,6 +142,14 @@ def writeMode(mode) {
         def payload = mode.getHueColor()
         log.debug("Setting color to $payload")
         colors?.setColor(payload)
+        if(mode?.hue_delay) {
+            log.debug("Starting Rainbow")
+            state.hue_delay = mode.hue_delay
+            runIn(mode.hue_delay, rainbow)
+        } else {
+            log.debug("Turning off rainbow")
+            unschedule(rainbow)
+        }
     }
     if (mode?.dimmer_level) {
         log.debug("Setting dimmer")
