@@ -94,12 +94,18 @@ def rogueHandler(evt) {
 }
 def onHandler(evt) {
 	log.debug "On $evt.displayName $evt.name: $evt.value"
+    auto_on()
+}
+
+def auto_on() {
     unschedule(allOff)
     writeMode(topMode())
 }
+
 def timeoutHandler(evt) {
 	log.debug "Timeout $evt.displayName $evt.name: $evt.value"
-    runIn(timeout, allOff)
+    log.debug "Scheduling allOff in $timeout * 60"
+    runIn(timeout * 60, allOff)
 }
 def offHandler(evt) {
 	log.debug "Off $evt.displayName $evt.name: $evt.value"
@@ -128,9 +134,16 @@ def writeMode(mode) {
         dimmers?.setLevel(mode.dimmer_level.toInteger())
     }
     if (mode?.switch_state) {
-        log.debug("Setting switch")
-        switches?.on()
+        log.debug("Setting switch to $mode.switch_state")
+        if (mode.switch_state as String == "true") {
+            log.debug("the switches are on")
+            switches?.on()
+        } else {
+            log.debug("the switches are off")
+            switches?.off()
+        }
     } else {
+        log.debug("the switches are really off")
         switches?.off()
     }
 

@@ -15,7 +15,7 @@ preferences {
     }
     section(title: "Device States") {
         input "temp", "number", title: "White Temperature", required:false, description: "idk the range yet"
-        input "temp_level", "enum", title: "White Level", required: false, options: [[10:"10%"],[20:"20%"],[30:"30%"],[40:"40%"],[50:"50%"],[60:"60%"],[70:"70%"],[80:"80%"],[90:"90%"],[100:"100%"]]
+        input "temp_level", "enum", title: "White Level", required: false, options: [[0: "0%"], [10:"10%"],[20:"20%"],[30:"30%"],[40:"40%"],[50:"50%"],[60:"60%"],[70:"70%"],[80:"80%"],[90:"90%"],[100:"100%"]]
         input "color", "enum", title: "Color", required: false, multiple:false, options: [
                 ["Soft White":"Soft White - Default"],
                 ["White":"White - Concentrate"],
@@ -29,8 +29,8 @@ preferences {
                 ["Purple": "Purple"],
                 ["Pink": "Pink"]
             ]
-        input "color_level", "enum", title: "Color Level", required: false, options: [[10:"10%"],[20:"20%"],[30:"30%"],[40:"40%"],[50:"50%"],[60:"60%"],[70:"70%"],[80:"80%"],[90:"90%"],[100:"100%"]]
-        input "dimmer_level", "enum", title: "Dimmer Level", required: false, options: [[10:"10%"],[20:"20%"],[30:"30%"],[40:"40%"],[50:"50%"],[60:"60%"],[70:"70%"],[80:"80%"],[90:"90%"],[100:"100%"]]
+        input "color_level", "enum", title: "Color Level", required: false, options: [[0: "0%"], [10:"10%"],[20:"20%"],[30:"30%"],[40:"40%"],[50:"50%"],[60:"60%"],[70:"70%"],[80:"80%"],[90:"90%"],[100:"100%"]]
+        input "dimmer_level", "enum", title: "Dimmer Level", required: false, options: [[0: "0%"], [10:"10%"],[20:"20%"],[30:"30%"],[40:"40%"],[50:"50%"],[60:"60%"],[70:"70%"],[80:"80%"],[90:"90%"],[100:"100%"]]
         input "switch_state", "enum", title: "Switch State", required: false, options: [[true:"On"],[false:"Off"]]
     }
 }
@@ -62,13 +62,19 @@ def installed() {
 
 def updated() {
 	log.debug "Updated with settings: ${settings}."
-	//unsubscribe()
-	//unschedule()
-	//initialize()
+	unsubscribe()
+	unschedule()
+	initialize()
 }
 
 def initialize() {
 	log.debug "Initialized with settings: ${settings}."
+    subscribe(switches, "switch", triggerParent)
+}
+
+def triggerParent(evt) {
+    log.debug "Mode triggered"
+    parent.auto_on()
 }
 
 def getHueColor() {
