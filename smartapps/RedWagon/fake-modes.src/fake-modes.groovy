@@ -66,6 +66,10 @@ def initialize() {
     state.bow_step = 1;
     state.bow_delay = 30;
     state.hue = 0;
+    state.saturation = 0;
+    state.level = 0;
+    state.active = false
+    
 	subscribe(temps, "colorTemperature", rogueHandler)
 	subscribe(colors, "colorControl", rogueHandler)
 
@@ -97,12 +101,23 @@ def rogueHandler(evt) {
 }
 def onHandler(evt) {
 	log.debug "On $evt.displayName $evt.name: $evt.value"
-    auto_on()
+    if (state.active) {
+        log.debug "This is already active doing nothing"
+    } else {
+        log.debug "This was off, turning on"
+        state.active = true
+        auto_on()
+    }
 }
 
 def auto_on() {
-    unschedule(allOff)
-    writeMode(topMode())
+    if (state.active) {
+        log.debug "Writing new modes"
+        unschedule(allOff)
+        writeMode(topMode())
+    } else {
+        log.debug "Not active, doing nothing"
+    }
 }
 
 def timeoutHandler(evt) {
@@ -110,12 +125,16 @@ def timeoutHandler(evt) {
     log.debug "Scheduling allOff in $timeout * 60"
     runIn(timeout * 60, allOff)
 }
+
 def offHandler(evt) {
 	log.debug "Off $evt.displayName $evt.name: $evt.value"
     allOff()
 }
 
 def allOff() {
+    state.active = false
+    log.debug("Turning off rainbow")
+    unschedule(rainbow)
     temps?.off()
     colors?.off()
     dimmers?.off()
@@ -123,14 +142,17 @@ def allOff() {
 }
 
 def rainbow() {
-    def new_hue = state.hue + state.hue_step
-    if (new_hue > 255) {
-        new_hue = 0
+    log.debug("Updating rainbow")
+    log.debug("State hue: $state.hue step: $state.bow_step")
+    def new_hue = state.hue + state.bow_step
+    if (new_hue > 100) {
+        new_hue = new_hue - 100
     }
     log.debug("Rainbow hue is $new_hue")
     state.hue = new_hue
     def payload = [hue: new_hue]
-    runIn(state.hue_delay, rainbow)
+    colors?.setColor(payload)
+    runIn(state.bow_delay, rainbow)
 }
 
 def writeMode(mode) {
@@ -142,12 +164,13 @@ def writeMode(mode) {
         def payload = mode.getHueColor()
         log.debug("Setting color to $payload")
         colors?.setColor(payload)
-        if(mode?.hue_delay) {
+        if(mode?.bow_delay) {
             log.debug("Starting Rainbow")
-            state.hue_delay = mode.hue_delay
-            runIn(mode.hue_delay, rainbow)
+            state.bow_step = mode.bow_step
+            state.bow_delay = mode.bow_delay
+            state.hue = payload.hue
+            runIn(mode.bow_delay, rainbow)
         } else {
-            log.debug("Turning off rainbow")
             unschedule(rainbow)
         }
     }
