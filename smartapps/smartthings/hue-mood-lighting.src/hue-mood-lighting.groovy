@@ -74,16 +74,15 @@ def mainPage() {
 		section("Control these bulbs...") {
 			input "hues", "capability.colorControl", title: "Which Hue Bulbs?", required:true, multiple:true
 		}
-		section("Choose light effects...")
-			{
-				input "color", "enum", title: "Hue Color?", required: false, multiple:false, options: [
-					["Soft White":"Soft White - Default"],
-					["White":"White - Concentrate"],
-					["Daylight":"Daylight - Energize"],
-					["Warm White":"Warm White - Relax"],
-					"Red","Green","Blue","Yellow","Orange","Purple","Pink"]
-				input "lightLevel", "enum", title: "Light Level?", required: false, options: [[10:"10%"],[20:"20%"],[30:"30%"],[40:"40%"],[50:"50%"],[60:"60%"],[70:"70%"],[80:"80%"],[90:"90%"],[100:"100%"]]
-			}
+		section("Choose light effects...") {
+            input "color", "enum", title: "Hue Color?", required: false, multiple:false, options: [
+                ["Soft White":"Soft White - Default"],
+                ["White":"White - Concentrate"],
+                ["Daylight":"Daylight - Energize"],
+                ["Warm White":"Warm White - Relax"],
+                "Red","Green","Blue","Yellow","Orange","Purple","Pink"]
+            input "lightLevel", "enum", title: "Light Level?", required: false, options: [[10:"10%"],[20:"20%"],[30:"30%"],[40:"40%"],[50:"50%"],[60:"60%"],[70:"70%"],[80:"80%"],[90:"90%"],[100:"100%"]]
+        }
 
 		section("More options", hideable: true, hidden: true) {
 			input "frequency", "decimal", title: "Minimum time between actions (defaults to every event)", description: "Minutes", required: false

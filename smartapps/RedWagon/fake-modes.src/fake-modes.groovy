@@ -101,6 +101,8 @@ def rogueHandler(evt) {
 }
 def onHandler(evt) {
 	log.debug "On $evt.displayName $evt.name: $evt.value"
+    unschedule(allOff)
+    unschedule(optionalOff)
     if (state.active) {
         log.debug "This is already active doing nothing"
     } else {
@@ -114,6 +116,7 @@ def auto_on() {
     if (state.active) {
         log.debug "Writing new modes"
         unschedule(allOff)
+        unschedule(optionalOff)
         writeMode(topMode())
     } else {
         log.debug "Not active, doing nothing"
@@ -122,8 +125,10 @@ def auto_on() {
 
 def timeoutHandler(evt) {
 	log.debug "Timeout $evt.displayName $evt.name: $evt.value"
-    log.debug "Scheduling allOff in $timeout * 60"
+    log.debug "Scheduling allOff in $timeout minutes"
+    log.debug "Scheduling optionalOff in $hard_timeout"
     runIn(timeout * 60, allOff)
+    runIn(hard_timeout * 60, optionalOff)
 }
 
 def offHandler(evt) {
@@ -141,8 +146,12 @@ def allOff() {
     switches?.off()
 }
 
+def optionalOff() {
+    optionals?.off()
+}
+
 def rainbow() {
-    log.debug("Updating rainbow")
+    log.deblug("Updating rainbow")
     log.debug("State hue: $state.hue step: $state.bow_step")
     def new_hue = state.hue + state.bow_step
     if (new_hue > 100) {
@@ -154,65 +163,61 @@ def rainbow() {
     colors?.setColor(payload)
     runIn(state.bow_delay, rainbow)
 }
+def writeColor(mode) {
+    if (!mode?.color) {
+        return
+    }
+    def payload = mode.getHueColor()
+    log.debug("Setting color to $payload")
+    colors?.setColor(payload)
+    if(!mode?.bow_delay) {
+        unschedule(rainbow)
+        return
+    }
+    log.debug("Starting Rainbow")
+    state.bow_step = mode.bow_step
+    state.bow_delay = mode.bow_delay
+    state.hue = payload.hue
+    runIn(mode.bow_delay, rainbow)
+}
+
+def writeSwitches(mode) {
+    if (!mode?.switch_state) {
+        return
+    }
+    log.debug("Setting switch to $mode.switch_state")
+    if (mode.switch_state as String == "true") {
+        log.debug("the switches are on")
+        switches?.on()
+        return
+    }
+    log.debug("the switches are off")
+    switches?.off()
+}
 
 def writeMode(mode) {
     if (mode?.temp) {
         log.debug("Setting temp")
         temps?.setColorTemperature(mode.temp.toInteger())
     }
-    if (mode?.color) {
-        def payload = mode.getHueColor()
-        log.debug("Setting color to $payload")
-        colors?.setColor(payload)
-        if(mode?.bow_delay) {
-            log.debug("Starting Rainbow")
-            state.bow_step = mode.bow_step
-            state.bow_delay = mode.bow_delay
-            state.hue = payload.hue
-            runIn(mode.bow_delay, rainbow)
-        } else {
-            unschedule(rainbow)
-        }
-    }
+    writeColor(mode)
     if (mode?.dimmer_level) {
         log.debug("Setting dimmer")
         dimmers?.setLevel(mode.dimmer_level.toInteger())
     }
-    if (mode?.switch_state) {
-        log.debug("Setting switch to $mode.switch_state")
-        if (mode.switch_state as String == "true") {
-            log.debug("the switches are on")
-            switches?.on()
-        } else {
-            log.debug("the switches are off")
-            switches?.off()
-        }
-    } else {
-        log.debug("the switches are really off")
-        switches?.off()
-    }
-
+    writeSwitches(mode)
 }
 
 def topMode() {
     log.debug("Choosing top mode")
     def modes = getChildApps()
-    //def top_mode = null
     log.debug("I found $modes.size modes")
-    //return modes.find{ mode -> // mode.active() == true }
     for (mode in modes.sort{ it.order }) {
         log.debug("Testing mode $mode.label")
         if (mode.active()) {
             log.debug("Mode is active $mode.label")
             return mode
         }
-        //if (!top_mode) {
-            //log.debug("Setting top mode $mode")
-            //top_mode = mode
-            //return mode
-        //}
     }
     log.warn("topMode didn't return")
-    //log.debug("Returning top mode $top_mode")
-    //return top_mode
 }
