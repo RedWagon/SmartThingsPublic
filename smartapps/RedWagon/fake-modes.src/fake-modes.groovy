@@ -151,7 +151,7 @@ def optionalOff() {
 }
 
 def rainbow() {
-    log.deblug("Updating rainbow")
+    log.debug("Updating rainbow")
     log.debug("State hue: $state.hue step: $state.bow_step")
     def new_hue = state.hue + state.bow_step
     if (new_hue > 100) {
@@ -170,15 +170,16 @@ def writeColor(mode) {
     def payload = mode.getHueColor()
     log.debug("Setting color to $payload")
     colors?.setColor(payload)
-    if(!mode?.bow_delay) {
+    if(mode?.bow_delay) {
+        log.debug("Starting Rainbow")
+        state.bow_step = mode.bow_step
+        state.bow_delay = mode.bow_delay
+        state.hue = payload.hue
+        runIn(mode.bow_delay, rainbow)
+    } else {
         unschedule(rainbow)
         return
     }
-    log.debug("Starting Rainbow")
-    state.bow_step = mode.bow_step
-    state.bow_delay = mode.bow_delay
-    state.hue = payload.hue
-    runIn(mode.bow_delay, rainbow)
 }
 
 def writeSwitches(mode) {
