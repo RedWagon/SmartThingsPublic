@@ -121,7 +121,7 @@ def getHueColor() {
             hueColor = 100
             break;
     }
-    def newValue = [hue: hueColor, saturation: saturation]
+    def newValue = [hue: hueColor, saturation: saturation, level: dimmer_level as Integer ?: 100]
     log.debug "new value = $newValue"
     return newValue
 }

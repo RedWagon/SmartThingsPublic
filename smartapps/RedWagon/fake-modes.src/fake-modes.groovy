@@ -170,6 +170,8 @@ def writeColor(mode) {
     def payload = mode.getHueColor()
     log.debug("Setting color to $payload")
     colors?.setColor(payload)
+    //colors?.setHue(payload.hue)
+    //colors?.setSaturation(payload.saturation)
     if(mode?.bow_delay) {
         log.debug("Starting Rainbow")
         state.bow_step = mode.bow_step
