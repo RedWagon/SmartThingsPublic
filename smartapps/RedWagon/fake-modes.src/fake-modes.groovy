@@ -202,7 +202,7 @@ def writeMode(mode) {
         temps?.setColorTemperature(mode.temp.toInteger())
     }
     writeColor(mode)
-    if (mode?.dimmer_level) {
+    if (mode?.dimmer_level != null) {
         log.debug("Setting dimmer")
         dimmers?.setLevel(mode.dimmer_level.toInteger())
     }
