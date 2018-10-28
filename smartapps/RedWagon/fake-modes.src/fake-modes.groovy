@@ -196,16 +196,26 @@ def writeSwitches(mode) {
     switches?.off()
 }
 
+def writeDimmers(mode) {
+    if (mode?.dimmer_level == null) {
+        log.debug("Dimmer is null")
+        return
+    }
+    if (mode?.dimmer_level == "") {
+        log.debug("Dimmer is empty string")
+        return
+    }
+    log.debug("Setting dimmer")
+    dimmers?.setLevel(mode.dimmer_level.toInteger())
+}
+
 def writeMode(mode) {
     if (mode?.temp) {
         log.debug("Setting temp")
         temps?.setColorTemperature(mode.temp.toInteger())
     }
     writeColor(mode)
-    if (mode?.dimmer_level != null) {
-        log.debug("Setting dimmer")
-        dimmers?.setLevel(mode.dimmer_level.toInteger())
-    }
+    writeDimmers(mode)
     writeSwitches(mode)
 }
 
