@@ -196,6 +196,7 @@ def writeSwitches(mode) {
     }
     log.debug("the switches are off")
     switches?.off()
+    unschedule(rainbow)
 }
 
 def writeDimmers(mode) {
@@ -213,6 +214,7 @@ def writeDimmers(mode) {
 
 def writeMode(mode) {
     if (mode?.temp) {
+        unschedule(rainbow)
         log.debug("Setting temp")
         temps?.setColorTemperature(mode.temp.toInteger())
     }
